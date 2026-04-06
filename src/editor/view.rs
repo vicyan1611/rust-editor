@@ -7,10 +7,9 @@ impl View {
         let height = Terminal::size()?.1;
         for row in current_row+1..height {
             Terminal::move_cursor_to(0, row)?;
-            Terminal::print(&'~')?;
+            Terminal::print_char(&'~')?;
             if row + 1 < height {
-                Terminal::print(&'\r')?;
-                Terminal::print(&'\n')?;
+                Terminal::print_str("\r\n")?;
             }
         }
         Ok(())

@@ -1,4 +1,4 @@
-use crossterm::event::KeyModifiers;
+use crossterm::event::{KeyCode, KeyModifiers};
 use crossterm::event::{read, Event::Key, KeyCode::Char};
 
 mod terminal;
@@ -45,15 +45,28 @@ impl Editor {
             self.refresh_screen()?;
             match read() {
                 Ok(Key(event)) => {
-                    if let Char(c) = event.code
-                    {
-                        Terminal::print(&c)?;
-                        self.current_x += 1;
-                        if KeyModifiers::CONTROL == event.modifiers
-                        && c == 'q' {
-                            break;
+                    match event.code {
+                        Char(c) => {
+                            Terminal::print_char(&c)?;
+                            self.current_x += 1;
+                            if KeyModifiers::CONTROL == event.modifiers && c == 'q' {
+                                break;
+                            }
                         }
-                    } 
+                        KeyCode::Backspace => {
+                            if self.current_x > 0 {
+                                self.current_x -= 1
+                            }
+                            Terminal::move_cursor_to(self.current_x, self.current_y)?;
+                            Terminal::print_char(&' ')?;
+                        },
+                        KeyCode::Enter => {
+                            Terminal::print_str("\r\n")?;
+                            self.current_y+= 1;
+                            self.current_x = 0;
+                        },
+                        _ => {}
+                    }
                 },
                 Err(err) => eprintln!("Error: {}", err),
                 Ok(_) => {}

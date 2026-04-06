@@ -15,8 +15,13 @@ impl Terminal {
         Ok(())
     }
 
-    pub fn print(c: &char) -> Result<(), std::io::Error> {
+    pub fn print_char(c: &char) -> Result<(), std::io::Error> {
         queue!(stdout(), Print(c))?;
+        Ok(())
+    }
+
+    pub fn print_str(st: &str) -> Result<(), std::io::Error> {
+        queue!(stdout(), Print(st))?;
         Ok(())
     }
 
