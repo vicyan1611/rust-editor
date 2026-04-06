@@ -4,6 +4,9 @@ use crossterm::event::{read, Event::Key, KeyCode::Char};
 mod terminal;
 use terminal::Terminal;
 
+mod view;
+use view::View;
+
 pub struct Editor {
     should_quit: bool,
     current_x: u16,
@@ -14,19 +17,6 @@ impl Editor {
 
     pub fn default() -> Editor {
         Editor { should_quit: false, current_x: 0, current_y: 0 }
-    }
-
-    fn draw_rows(&mut self) -> Result<(), std::io::Error> {
-        let height = Terminal::size()?.1;
-        for current_row in self.current_y+1..height {
-            Terminal::move_cursor_to(0, current_row)?;
-            Terminal::print(&'~')?;
-            if current_row + 1 < height {
-                Terminal::print(&'\r')?;
-                Terminal::print(&'\n')?;
-            }
-        }
-        Ok(())
     }
 
     pub fn run(&mut self) -> Result<(), std::io::Error> {
@@ -43,7 +33,7 @@ impl Editor {
         if self.should_quit {
             Terminal::clear_screen()?;
         } else {
-            self.draw_rows()?;
+            View::render(&self.current_y)?;
             Terminal::move_cursor_to(self.current_x,self.current_y)?;
             Terminal::execute()?;
         }
@@ -65,7 +55,7 @@ impl Editor {
                         }
                     } 
                 },
-                Err(err) => println!("Error: {}", err),
+                Err(err) => eprintln!("Error: {}", err),
                 Ok(_) => {}
 
             }
