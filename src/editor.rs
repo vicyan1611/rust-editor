@@ -19,6 +19,8 @@ impl Editor {
         Editor { should_quit: false, current_x: 0, current_y: 0 }
     }
 
+
+
     pub fn run(&mut self) -> Result<(), std::io::Error> {
         Terminal::initialize()?;
         self.current_x = 0;
@@ -36,6 +38,53 @@ impl Editor {
             View::render(&self.current_y)?;
             Terminal::move_cursor_to(self.current_x,self.current_y)?;
             Terminal::execute()?;
+        }
+        Ok(())
+    }
+
+    fn move_vertical(&mut self, delta: i16) -> Result<(), std::io::Error> {
+        let mut newv = delta + self.current_y as i16;
+        newv = std::cmp::max(newv, 0);
+        newv = std::cmp::min(newv, Terminal::size()?.0 as i16);
+        self.current_y = newv as u16;
+        Ok(())
+    }
+
+    fn move_horizontal(&mut self, delta: i16) -> Result<(), std::io::Error> {
+        let mut newh = delta + self.current_x as i16;
+        newh = std::cmp::max(newh, 0);
+        newh = std::cmp::min(newh, Terminal::size()?.1 as i16);
+        self.current_x = newh as u16;
+        Ok(())
+    }
+
+    fn move_point(&mut self, code: &KeyCode) -> Result<(), std::io::Error> {
+        match code {
+            KeyCode::Up => {
+                self.move_vertical(-1)?;
+            }
+            KeyCode::Down => {
+                self.move_vertical(1)?;
+            }
+            KeyCode::Left => {
+                self.move_horizontal(-1)?;
+            }
+            KeyCode::Right => {
+                self.move_horizontal(1)?;
+            }
+            KeyCode::PageDown => {
+                self.move_vertical(Terminal::size()?.0 as i16)?;
+            }
+            KeyCode::PageUp => {
+                self.move_vertical(-(Terminal::size()?.0 as i16))?;
+            }
+            KeyCode::Home => {
+                self.move_horizontal(-(Terminal::size()?.1 as i16))?;
+            }
+            KeyCode::End => {
+                self.move_horizontal(Terminal::size()?.1 as i16)?;
+            }
+            _ => {}
         }
         Ok(())
     }
@@ -65,6 +114,15 @@ impl Editor {
                             self.current_y+= 1;
                             self.current_x = 0;
                         },
+                        KeyCode::Up | KeyCode::Down
+                        | KeyCode::Left
+                        | KeyCode::Right
+                        | KeyCode::PageDown
+                        | KeyCode::PageUp
+                        | KeyCode::End
+                        | KeyCode::Home => {
+                            self.move_point(&event.code)?;
+                        }
                         _ => {}
                     }
                 },
