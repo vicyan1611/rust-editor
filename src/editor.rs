@@ -18,10 +18,12 @@ impl Editor {
 
     fn draw_rows(&mut self) -> Result<(), std::io::Error> {
         let height = Terminal::size()?.1;
-        for current_row in self.current_x..height {
-            print!("~");
+        for current_row in self.current_y+1..height {
+            Terminal::move_cursor_to(0, current_row)?;
+            Terminal::print(&'~')?;
             if current_row + 1 < height {
-                print!("\r\n");
+                Terminal::print(&'\r')?;
+                Terminal::print(&'\n')?;
             }
         }
         Ok(())
@@ -29,10 +31,9 @@ impl Editor {
 
     pub fn run(&mut self) -> Result<(), std::io::Error> {
         Terminal::initialize()?;
-        Self::draw_rows(self)?;
-        Terminal::move_cursor_to(0, 0)?;
         self.current_x = 0;
         self.current_y = 0;
+        self.refresh_screen()?;
         Self::repl(self)?;
         Terminal::terminate()?;
         Ok(())
@@ -43,19 +44,21 @@ impl Editor {
             Terminal::clear_screen()?;
         } else {
             self.draw_rows()?;
-            Terminal::move_cursor_to(0,0)?;
+            Terminal::move_cursor_to(self.current_x,self.current_y)?;
+            Terminal::execute()?;
         }
         Ok(())
     }
 
     pub fn repl(&mut self) -> Result<(), std::io::Error> {
         loop {
-            // self.refresh_screen()?;
+            self.refresh_screen()?;
             match read() {
                 Ok(Key(event)) => {
                     if let Char(c) = event.code
                     {
-                        Terminal::print(&c )?;
+                        Terminal::print(&c)?;
+                        self.current_x += 1;
                         if KeyModifiers::CONTROL == event.modifiers
                         && c == 'q' {
                             break;
